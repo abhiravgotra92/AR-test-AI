@@ -948,3 +948,160 @@ function displayNews(articles) {
     newsContent.appendChild(newsGrid);
 }
 
+
+
+// Group Chat Functionality using free public API
+let chatUsername = '';
+let chatRoomId = 'luxe-travel-global-chat';
+let lastMessageId = 0;
+const CHAT_API = 'https://api.jsonbin.io/v3/b/'; // Free JSON storage
+const BIN_ID = '6756a1b2ad19ca34f8d4e8f9'; // Public bin for chat
+
+function initializeChat() {
+    // Get or create username
+    chatUsername = localStorage.getItem('chatUsername');
+    if (!chatUsername) {
+        chatUsername = prompt('Enter your name for chat:') || 'Traveler' + Math.floor(Math.random() * 1000);
+        localStorage.setItem('chatUsername', chatUsername);
+    }
+    
+    // Load messages
+    loadMessages();
+    
+    // Poll for new messages every 3 seconds
+    setInterval(loadMessages, 3000);
+}
+
+function loadMessages() {
+    fetch(`https://api.allorigins.win/raw?url=https://jsonkeeper.com/b/LUXE_CHAT`)
+        .then(response => response.json())
+        .then(data => {
+            const messages = data.messages || [];
+            displayMessages(messages);
+        })
+        .catch(error => {
+            console.error('Error loading messages:', error);
+            // Fallback to localStorage
+            const messages = JSON.parse(localStorage.getItem('luxe-chat-backup') || '[]');
+            displayMessages(messages);
+        });
+}
+
+function displayMessages(messages) {
+    const chatMessages = document.getElementById('chatMessages');
+    
+    if (messages.length === 0) {
+        chatMessages.innerHTML = '<div class="chat-system-message">No messages yet. Be the first to say hello!</div>';
+        return;
+    }
+    
+    // Only update if there are new messages
+    if (messages.length > 0 && messages[messages.length - 1].id > lastMessageId) {
+        chatMessages.innerHTML = '';
+        
+        messages.slice(-50).forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message' + (msg.username === chatUsername ? ' own' : '');
+            
+            const time = new Date(msg.time).toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            messageDiv.innerHTML = `
+                <div class="chat-message-header">
+                    <span class="chat-username">${escapeHtml(msg.username)}</span>
+                    <span class="chat-time">${time}</span>
+                </div>
+                <div class="chat-message-text">${escapeHtml(msg.text)}</div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+        });
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        if (messages.length > 0) {
+            lastMessageId = messages[messages.length - 1].id;
+        }
+        
+        // Backup to localStorage
+        localStorage.setItem('luxe-chat-backup', JSON.stringify(messages));
+    }
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    
+    if (!text) return;
+    
+    const newMessage = {
+        id: Date.now(),
+        username: chatUsername,
+        text: text,
+        time: Date.now()
+    };
+    
+    // Get existing messages from backup
+    const messages = JSON.parse(localStorage.getItem('luxe-chat-backup') || '[]');
+    messages.push(newMessage);
+    
+    // Keep only last 100 messages
+    if (messages.length > 100) {
+        messages.shift();
+    }
+    
+    // Save to localStorage as backup
+    localStorage.setItem('luxe-chat-backup', JSON.stringify(messages));
+    
+    // Try to send to server (will work if API is available)
+    fetch('https://jsonkeeper.com/b/LUXE_CHAT', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: messages })
+    }).catch(() => {
+        console.log('Using local storage mode');
+    });
+    
+    // Clear input
+    input.value = '';
+    
+    // Display immediately
+    displayMessages(messages);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Add chat event listeners in window.onload
+document.addEventListener('DOMContentLoaded', function() {
+    // Group Chat Button
+    document.getElementById('toggleChatBtn').addEventListener('click', function() {
+        document.getElementById('chatModal').style.display = 'flex';
+        initializeChat();
+    });
+    
+    // Close Chat Modal
+    document.getElementById('closeChatBtn').addEventListener('click', function() {
+        document.getElementById('chatModal').style.display = 'none';
+    });
+    
+    document.getElementById('chatModalOverlay').addEventListener('click', function() {
+        document.getElementById('chatModal').style.display = 'none';
+    });
+    
+    // Send Message Button
+    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
+    
+    // Send message on Enter key
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+});
