@@ -3,7 +3,8 @@ let chatUsername = '';
 let chatMessages = [];
 let isPolling = false;
 let pollInterval = null;
-const CHAT_API_URL = 'https://jsonkeeper.com/b/LUXE_CHAT';
+const CHAT_API_URL = 'https://api.jsonbin.io/v3/b/679d8e3ead19ca34f8e7c123';
+const JSONBIN_API_KEY = '$2a$10$vZ8qN5xK3mH9pL2wR4tY6eX1cF7bG9hJ5kM3nP8qS2vT4wU6yA0zO';
 const CHAT_STORAGE_KEY = 'luxe-travel-chat-messages';
 const CHAT_USER_KEY = 'luxe-travel-chat-username';
 const POLL_INTERVAL = 2000; // Poll every 2 seconds for real-time feel
@@ -92,14 +93,18 @@ function closeChat() {
 
 function syncMessagesFromServer() {
     // Fetch latest messages from server
-    fetch(CHAT_API_URL)
+    fetch(CHAT_API_URL + '/latest', {
+        headers: {
+            'X-Master-Key': JSONBIN_API_KEY
+        }
+    })
         .then(response => {
             if (!response.ok) throw new Error('Server unavailable');
             return response.json();
         })
         .then(data => {
-            if (data && data.messages && Array.isArray(data.messages)) {
-                const serverMessages = data.messages;
+            if (data && data.record && data.record.messages && Array.isArray(data.record.messages)) {
+                const serverMessages = data.record.messages;
                 
                 // Check if we have new messages
                 const hasNewMessages = serverMessages.length !== chatMessages.length ||
@@ -177,9 +182,10 @@ function sendChatMessage() {
 
 function uploadToServer() {
     fetch(CHAT_API_URL, {
-        method: 'POST',
+        method: 'PUT',
         headers: { 
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Master-Key': JSONBIN_API_KEY
         },
         body: JSON.stringify({ messages: chatMessages })
     })
