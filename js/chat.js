@@ -25,8 +25,8 @@ function initializeChat() {
         clearInterval(messagePolling);
     }
     
-    // Start polling for new messages
-    messagePolling = setInterval(loadMessages, 2000);
+    // Start polling for new messages every 3 seconds (reduced from 2 for better performance)
+    messagePolling = setInterval(loadMessages, 3000);
 }
 
 function loadMessages() {
