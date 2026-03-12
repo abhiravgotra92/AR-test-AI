@@ -14,6 +14,7 @@ function initChat() {
     document.getElementById('closeChatBtn').addEventListener('click', closeChat);
     document.getElementById('chatModalOverlay').addEventListener('click', closeChat);
     document.getElementById('sendMessageBtn').addEventListener('click', sendChatMessage);
+    document.getElementById('changeUsernameBtn').addEventListener('click', changeUsername);
     
     document.getElementById('chatInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -21,6 +22,33 @@ function initChat() {
             sendChatMessage();
         }
     });
+}
+
+function changeUsername() {
+    const newUsername = prompt('Enter your new username:', chatUsername);
+    
+    if (newUsername && newUsername.trim() !== '') {
+        const oldUsername = chatUsername;
+        chatUsername = newUsername.trim();
+        localStorage.setItem(CHAT_USER_KEY, chatUsername);
+        
+        // Update display
+        document.getElementById('currentUsername').textContent = chatUsername;
+        
+        // Send system message about username change
+        const systemMessage = {
+            id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            username: 'System',
+            text: `${oldUsername} changed their name to ${chatUsername}`,
+            time: Date.now(),
+            isSystem: true
+        };
+        
+        chatMessages.push(systemMessage);
+        saveToLocalStorage();
+        renderMessages(true);
+        uploadToServer();
+    }
 }
 
 function openChat() {
@@ -34,6 +62,9 @@ function openChat() {
         chatUsername = chatUsername.trim();
         localStorage.setItem(CHAT_USER_KEY, chatUsername);
     }
+    
+    // Display current username
+    document.getElementById('currentUsername').textContent = chatUsername;
     
     // Show modal
     document.getElementById('chatModal').style.display = 'flex';
@@ -193,20 +224,27 @@ function renderMessages(scrollToBottom = false) {
     
     messagesToShow.forEach(msg => {
         const messageDiv = document.createElement('div');
-        messageDiv.className = 'chat-message' + (msg.username === chatUsername ? ' own' : '');
         
-        const time = new Date(msg.time).toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        
-        messageDiv.innerHTML = `
-            <div class="chat-message-header">
-                <span class="chat-username">${escapeHtml(msg.username)}</span>
-                <span class="chat-time">${time}</span>
-            </div>
-            <div class="chat-message-text">${escapeHtml(msg.text)}</div>
-        `;
+        // Check if it's a system message
+        if (msg.isSystem || msg.username === 'System') {
+            messageDiv.className = 'chat-system-message';
+            messageDiv.textContent = msg.text;
+        } else {
+            messageDiv.className = 'chat-message' + (msg.username === chatUsername ? ' own' : '');
+            
+            const time = new Date(msg.time).toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            messageDiv.innerHTML = `
+                <div class="chat-message-header">
+                    <span class="chat-username">${escapeHtml(msg.username)}</span>
+                    <span class="chat-time">${time}</span>
+                </div>
+                <div class="chat-message-text">${escapeHtml(msg.text)}</div>
+            `;
+        }
         
         container.appendChild(messageDiv);
     });

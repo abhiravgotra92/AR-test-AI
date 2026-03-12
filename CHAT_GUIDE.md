@@ -16,6 +16,26 @@ The group chat is now a **TRUE REAL-TIME LIVE CHAT** between users!
 - ✅ **localStorage backup** - Works offline too
 - ✅ **Auto-scroll** - Scrolls to latest message
 - ✅ **Unique IDs** - No duplicate messages
+- ✅ **Change username** - Update your name anytime in the same window!
+- ✅ **System messages** - Notifies when users change names
+
+---
+
+## 🆕 NEW: Change Username Feature
+
+### How to Change Your Username:
+1. Open the chat modal
+2. Look at the top - you'll see "Chatting as: [Your Name]"
+3. Click the ✏️ edit icon button
+4. Enter your new username
+5. Everyone in the chat will see: "[Old Name] changed their name to [New Name]"
+
+### Features:
+- ✅ Change username without closing chat
+- ✅ System message notifies all users
+- ✅ Your new name appears on all future messages
+- ✅ Past messages keep your old name
+- ✅ Saved to localStorage
 
 ---
 
@@ -115,6 +135,9 @@ Renders on User 2's screen
 - ✅ Empty message prevention
 - ✅ Last 100 messages kept
 - ✅ Polling stops when closed
+- ✅ **Change username in same window**
+- ✅ **System notifications for username changes**
+- ✅ **Username displayed at top of chat**
 
 ---
 

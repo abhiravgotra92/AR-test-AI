@@ -241,6 +241,7 @@
             <div class="user-header">
                 <h2>👤 User 1</h2>
                 <div class="username">Alice</div>
+                <button onclick="changeName(1)" style="margin-top: 10px; padding: 5px 15px; background: rgba(255,255,255,0.2); border: none; border-radius: 15px; color: white; cursor: pointer; font-size: 12px;">Change Name</button>
             </div>
             <div class="chat-messages" id="messages1"></div>
             <div class="chat-input-container">
@@ -254,6 +255,7 @@
             <div class="user-header">
                 <h2>👤 User 2</h2>
                 <div class="username">Bob</div>
+                <button onclick="changeName(2)" style="margin-top: 10px; padding: 5px 15px; background: rgba(255,255,255,0.2); border: none; border-radius: 15px; color: white; cursor: pointer; font-size: 12px;">Change Name</button>
             </div>
             <div class="chat-messages" id="messages2"></div>
             <div class="chat-input-container">
@@ -376,20 +378,27 @@
             
             messages.slice(-50).forEach(msg => {
                 const div = document.createElement('div');
-                div.className = 'chat-message' + (msg.username === username ? ' own' : '');
                 
-                const time = new Date(msg.time).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
-                div.innerHTML = `
-                    <div class="chat-message-header">
-                        <span class="chat-username">${escape(msg.username)}</span>
-                        <span class="chat-time">${time}</span>
-                    </div>
-                    <div class="chat-message-text">${escape(msg.text)}</div>
-                `;
+                // Check if system message
+                if (msg.isSystem || msg.username === 'System') {
+                    div.className = 'chat-system-message';
+                    div.textContent = msg.text;
+                } else {
+                    div.className = 'chat-message' + (msg.username === username ? ' own' : '');
+                    
+                    const time = new Date(msg.time).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    div.innerHTML = `
+                        <div class="chat-message-header">
+                            <span class="chat-username">${escape(msg.username)}</span>
+                            <span class="chat-time">${time}</span>
+                        </div>
+                        <div class="chat-message-text">${escape(msg.text)}</div>
+                    `;
+                }
                 
                 container.appendChild(div);
             });
@@ -435,6 +444,36 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: [] })
                 }).then(() => location.reload());
+            }
+        }
+        
+        // Change username
+        function changeName(userNum) {
+            const oldName = users[userNum - 1];
+            const newName = prompt('Enter new username:', oldName);
+            
+            if (newName && newName.trim() !== '') {
+                users[userNum - 1] = newName.trim();
+                document.querySelectorAll('.user-header .username')[userNum - 1].textContent = newName.trim();
+                
+                // Send system message
+                const msg = {
+                    id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                    username: 'System',
+                    text: `${oldName} changed their name to ${newName.trim()}`,
+                    time: Date.now(),
+                    isSystem: true
+                };
+                
+                messages.push(msg);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+                render();
+                
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: messages })
+                }).then(() => setTimeout(loadMessages, 500));
             }
         }
         

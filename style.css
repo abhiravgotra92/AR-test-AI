@@ -1310,6 +1310,57 @@ body {
     height: calc(80vh - 120px);
 }
 
+.chat-header-controls {
+    background: white;
+    padding: 15px 20px;
+    border-bottom: 2px solid var(--light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.current-username {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.username-label {
+    font-size: 13px;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.username-display {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--vector-blue);
+    background: var(--light);
+    padding: 6px 15px;
+    border-radius: 20px;
+}
+
+.change-username-btn {
+    background: transparent;
+    border: 2px solid var(--light);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: var(--vector-blue);
+}
+
+.change-username-btn:hover {
+    background: var(--vector-blue);
+    border-color: var(--vector-blue);
+    color: white;
+    transform: rotate(15deg) scale(1.1);
+}
+
 .chat-messages {
     flex: 1;
     overflow-y: auto;
