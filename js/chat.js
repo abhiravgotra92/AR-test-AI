@@ -1,89 +1,53 @@
-// Group Chat Module - Real-time Live Chat
+// ArLux Group Chat - Real-time messaging
 let chatUsername = '';
 let chatMessages = [];
 let isPolling = false;
 let pollInterval = null;
-const CHAT_API_URL = 'https://api.jsonbin.io/v3/b/679d8e3ead19ca34f8e7c123';
-const JSONBIN_API_KEY = '$2a$10$vZ8qN5xK3mH9pL2wR4tY6eX1cF7bG9hJ5kM3nP8qS2vT4wU6yA0zO';
-const CHAT_STORAGE_KEY = 'luxe-travel-chat-messages';
-const CHAT_USER_KEY = 'luxe-travel-chat-username';
-const POLL_INTERVAL = 2000; // Poll every 2 seconds for real-time feel
+let lastMessageId = null;
 
-// Initialize chat when modal opens
+const CHAT_API_URL = 'https://api.jsonbin.io/v3/b/679d8e3ead19ca34f8e7c123';
+const API_KEY = '$2a$10$vZ8qN5xK3mH9pL2wR4tY6eX1cF7bG9hJ5kM3nP8qS2vT4wU6yA0zO';
+const POLL_INTERVAL = 3000;
+
 function initChat() {
     document.getElementById('toggleChatBtn').addEventListener('click', openChat);
     document.getElementById('closeChatBtn').addEventListener('click', closeChat);
     document.getElementById('chatModalOverlay').addEventListener('click', closeChat);
-    document.getElementById('sendMessageBtn').addEventListener('click', sendChatMessage);
+    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
     document.getElementById('changeUsernameBtn').addEventListener('click', changeUsername);
     
     document.getElementById('chatInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendChatMessage();
+            sendMessage();
         }
     });
 }
 
-function changeUsername() {
-    const newUsername = prompt('Enter your new username:', chatUsername);
-    
-    if (newUsername && newUsername.trim() !== '') {
-        const oldUsername = chatUsername;
-        chatUsername = newUsername.trim();
-        localStorage.setItem(CHAT_USER_KEY, chatUsername);
-        
-        // Update display
-        document.getElementById('currentUsername').textContent = chatUsername;
-        
-        // Send system message about username change
-        const systemMessage = {
-            id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-            username: 'System',
-            text: `${oldUsername} changed their name to ${chatUsername}`,
-            time: Date.now(),
-            isSystem: true
-        };
-        
-        chatMessages.push(systemMessage);
-        saveToLocalStorage();
-        renderMessages(true);
-        uploadToServer();
-    }
-}
-
 function openChat() {
-    // Get or create username
-    chatUsername = localStorage.getItem(CHAT_USER_KEY);
+    chatUsername = localStorage.getItem('arlux-username');
     if (!chatUsername) {
-        chatUsername = prompt('Enter your name for chat:');
+        chatUsername = prompt('Enter your name:');
         if (!chatUsername || chatUsername.trim() === '') {
-            chatUsername = 'Traveler' + Math.floor(Math.random() * 9999);
+            chatUsername = 'User' + Math.floor(Math.random() * 9999);
         }
         chatUsername = chatUsername.trim();
-        localStorage.setItem(CHAT_USER_KEY, chatUsername);
+        localStorage.setItem('arlux-username', chatUsername);
     }
     
-    // Display current username
     document.getElementById('currentUsername').textContent = chatUsername;
-    
-    // Show modal
     document.getElementById('chatModal').style.display = 'flex';
     
-    // Load messages immediately from server
-    syncMessagesFromServer();
+    loadMessages();
     
-    // Start real-time polling
     if (!isPolling) {
         isPolling = true;
-        pollInterval = setInterval(syncMessagesFromServer, POLL_INTERVAL);
+        pollInterval = setInterval(loadMessages, POLL_INTERVAL);
     }
 }
 
 function closeChat() {
     document.getElementById('chatModal').style.display = 'none';
-    
-    // Stop polling when chat is closed
     if (pollInterval) {
         clearInterval(pollInterval);
         pollInterval = null;
@@ -91,159 +55,117 @@ function closeChat() {
     }
 }
 
-function syncMessagesFromServer() {
-    // Fetch latest messages from server
-    fetch(CHAT_API_URL + '/latest', {
-        headers: {
-            'X-Master-Key': JSONBIN_API_KEY
-        }
-    })
-        .then(response => {
-            if (!response.ok) throw new Error('Server unavailable');
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.record && data.record.messages && Array.isArray(data.record.messages)) {
-                const serverMessages = data.record.messages;
-                
-                // Check if we have new messages
-                const hasNewMessages = serverMessages.length !== chatMessages.length ||
-                    JSON.stringify(serverMessages) !== JSON.stringify(chatMessages);
-                
-                if (hasNewMessages) {
-                    chatMessages = serverMessages;
-                    saveToLocalStorage();
-                    renderMessages();
-                }
-            } else {
-                // No messages on server, load from localStorage
-                loadFromLocalStorage();
-            }
-        })
-        .catch(error => {
-            console.log('Server sync failed, using local storage:', error.message);
-            loadFromLocalStorage();
-        });
-}
-
-function loadFromLocalStorage() {
-    try {
-        const stored = localStorage.getItem(CHAT_STORAGE_KEY);
-        if (stored) {
-            const localMessages = JSON.parse(stored);
-            if (localMessages.length > chatMessages.length) {
-                chatMessages = localMessages;
-                renderMessages();
-            }
-        }
-        if (chatMessages.length === 0) {
-            showEmptyState();
-        }
-    } catch (error) {
-        console.error('Error loading from localStorage:', error);
-        showEmptyState();
+function changeUsername() {
+    const newName = prompt('Enter new username:', chatUsername);
+    if (newName && newName.trim() !== '') {
+        const oldName = chatUsername;
+        chatUsername = newName.trim();
+        localStorage.setItem('arlux-username', chatUsername);
+        document.getElementById('currentUsername').textContent = chatUsername;
+        
+        const systemMsg = {
+            id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            username: 'System',
+            text: `${oldName} is now ${chatUsername}`,
+            time: Date.now(),
+            isSystem: true
+        };
+        
+        chatMessages.push(systemMsg);
+        saveMessages();
     }
 }
 
-function sendChatMessage() {
+function loadMessages() {
+    fetch(CHAT_API_URL + '/latest', {
+        headers: { 'X-Master-Key': API_KEY }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.record && data.record.messages) {
+            chatMessages = data.record.messages;
+            renderMessages();
+        } else {
+            chatMessages = [];
+            showEmpty();
+        }
+    })
+    .catch(err => {
+        console.log('Load failed:', err);
+        showEmpty();
+    });
+}
+
+function sendMessage() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     
     if (!text) return;
     
-    // Clear input immediately for better UX
     input.value = '';
     
-    // Create new message with unique ID
-    const newMessage = {
+    const msg = {
         id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
         username: chatUsername,
         text: text,
         time: Date.now()
     };
     
-    // Add to local messages array
-    chatMessages.push(newMessage);
+    chatMessages.push(msg);
     
-    // Keep only last 100 messages
     if (chatMessages.length > 100) {
         chatMessages = chatMessages.slice(-100);
     }
     
-    // Save to localStorage immediately
-    saveToLocalStorage();
-    
-    // Render immediately for instant feedback
     renderMessages(true);
-    
-    // Upload to server for other users
-    uploadToServer();
+    saveMessages();
 }
 
-function uploadToServer() {
+function saveMessages() {
     fetch(CHAT_API_URL, {
         method: 'PUT',
         headers: { 
             'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_API_KEY
+            'X-Master-Key': API_KEY
         },
         body: JSON.stringify({ messages: chatMessages })
     })
-    .then(response => {
-        if (response.ok) {
-            console.log('✅ Message synced to server - other users will see it!');
-            // Immediately sync to get any messages from other users
-            setTimeout(syncMessagesFromServer, 500);
-        } else {
-            console.log('⚠️ Server sync failed, message saved locally');
+    .then(res => {
+        if (res.ok) {
+            console.log('✅ Synced');
+            setTimeout(loadMessages, 500);
         }
     })
-    .catch(error => {
-        console.log('⚠️ Server unavailable, message saved locally only');
-    });
+    .catch(err => console.log('Save failed:', err));
 }
 
-function saveToLocalStorage() {
-    try {
-        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatMessages));
-    } catch (error) {
-        console.error('Error saving to localStorage:', error);
-    }
-}
-
-function renderMessages(scrollToBottom = false) {
+function renderMessages(scroll = false) {
     const container = document.getElementById('chatMessages');
     
     if (!chatMessages || chatMessages.length === 0) {
-        showEmptyState();
+        showEmpty();
         return;
     }
     
-    // Check if user was scrolled to bottom
-    const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+    const wasBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
     
-    // Clear container
     container.innerHTML = '';
     
-    // Show last 50 messages
-    const messagesToShow = chatMessages.slice(-50);
-    
-    messagesToShow.forEach(msg => {
-        const messageDiv = document.createElement('div');
+    chatMessages.slice(-50).forEach(msg => {
+        const div = document.createElement('div');
         
-        // Check if it's a system message
-        if (msg.isSystem || msg.username === 'System') {
-            messageDiv.className = 'chat-system-message';
-            messageDiv.textContent = msg.text;
+        if (msg.isSystem) {
+            div.className = 'chat-system-message';
+            div.textContent = msg.text;
         } else {
-            messageDiv.className = 'chat-message' + (msg.username === chatUsername ? ' own' : '');
+            div.className = 'chat-message' + (msg.username === chatUsername ? ' own' : '');
             
             const time = new Date(msg.time).toLocaleTimeString('en-US', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
             
-            messageDiv.innerHTML = `
+            div.innerHTML = `
                 <div class="chat-message-header">
                     <span class="chat-username">${escapeHtml(msg.username)}</span>
                     <span class="chat-time">${time}</span>
@@ -252,20 +174,17 @@ function renderMessages(scrollToBottom = false) {
             `;
         }
         
-        container.appendChild(messageDiv);
+        container.appendChild(div);
     });
     
-    // Auto-scroll if user was at bottom or if forced
-    if (wasAtBottom || scrollToBottom) {
-        setTimeout(() => {
-            container.scrollTop = container.scrollHeight;
-        }, 50);
+    if (wasBottom || scroll) {
+        setTimeout(() => container.scrollTop = container.scrollHeight, 50);
     }
 }
 
-function showEmptyState() {
+function showEmpty() {
     const container = document.getElementById('chatMessages');
-    container.innerHTML = '<div class="chat-system-message">No messages yet. Be the first to say hello! 👋</div>';
+    container.innerHTML = '<div class="chat-system-message">No messages yet. Say hello! 👋</div>';
 }
 
 function escapeHtml(text) {
