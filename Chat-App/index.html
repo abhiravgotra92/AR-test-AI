@@ -26,9 +26,12 @@
       <div class="header-left">
         <span class="logo-sm">💬</span>
         <span class="room-name">LiveChat</span>
+        <span id="conn-status" class="conn-dot" title="Connection status"></span>
       </div>
       <div class="header-right">
         <span id="online-count">🟢 <span id="online-num">1</span> online</span>
+        <button id="refresh-btn" title="Refresh messages">🔄</button>
+        <button id="clear-btn" title="Clear chat history">🗑️</button>
         <button id="leave-btn" title="Leave chat">✕</button>
       </div>
     </header>
@@ -43,7 +46,17 @@
     </form>
   </div>
 
-  <!-- Gun.js — no registration, no server needed -->
+  <!-- Confirm Clear Modal -->
+  <div id="confirm-modal" class="hidden">
+    <div class="modal-box">
+      <p>🗑️ Clear all chat history for everyone?</p>
+      <div class="modal-btns">
+        <button id="confirm-yes">Yes, clear it</button>
+        <button id="confirm-no">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="chat.js"></script>
 </body>
