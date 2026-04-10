@@ -109,5 +109,3 @@ window.addEventListener('error', (event) => {
 window.addEventListener('unhandledrejection', (event) => {
   window.errorHandler.handle(new Error(event.reason), 'Promise');
 });
-
-export default window.errorHandler;

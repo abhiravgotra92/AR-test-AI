@@ -262,31 +262,6 @@ window.onload = function() {
         document.getElementById('newsModal').style.display = 'none';
     });
     
-    // Group Chat Button
-    document.getElementById('toggleChatBtn').addEventListener('click', function() {
-        document.getElementById('chatModal').style.display = 'flex';
-        initializeChat();
-    });
-    
-    // Close Chat Modal
-    document.getElementById('closeChatBtn').addEventListener('click', function() {
-        document.getElementById('chatModal').style.display = 'none';
-    });
-    
-    document.getElementById('chatModalOverlay').addEventListener('click', function() {
-        document.getElementById('chatModal').style.display = 'none';
-    });
-    
-    // Send Message Button
-    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
-    
-    // Send message on Enter key
-    document.getElementById('chatInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
-    });
-    
     document.getElementById('searchButton').addEventListener('click', function() {
         const cityName = document.getElementById('cityInput').value.trim();
         
@@ -552,9 +527,19 @@ function fetchFromWikipedia(city, category, placesList, categoryNames) {
                         const description = place.tags.description || place.tags['addr:street'] || `${place.tags.tourism || place.tags.amenity || place.tags.leisure || 'Place'} in ${city}`;
                         const wikiLink = place.tags.wikipedia ? `https://en.wikipedia.org/wiki/${place.tags.wikipedia.split(':')[1]}` : `https://www.google.com/search?q=${encodeURIComponent(place.tags.name + ' ' + city)}`;
                         
-                        // Use Unsplash with search query for more relevant images
-                        const searchTerm = `${place.tags.name} ${city}`.replace(/[^a-zA-Z0-9 ]/g, '');
-                        const imageUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(searchTerm)}`;
+                        const categoryImageFallbacks = {
+                            landmark: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
+                            nature: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop',
+                            entertainment: 'https://images.unsplash.com/photo-1514306191717-452ec28c7814?w=400&h=300&fit=crop',
+                            shopping: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+                            food: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
+                            culture: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=300&fit=crop',
+                            religion: 'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=400&h=300&fit=crop',
+                            waterfront: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=300&fit=crop',
+                            sports: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=300&fit=crop',
+                            nightlife: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=300&fit=crop'
+                        };
+                        const imageUrl = categoryImageFallbacks[category] || categoryImageFallbacks['landmark'];
                         
                         card.innerHTML = `
                             <div class="place-image" style="background-image: url('${imageUrl}');"></div>
@@ -975,166 +960,6 @@ function displayNews(articles) {
 
 
 
-// Group Chat Functionality using free public API
-let chatUsername = '';
-let chatRoomId = 'luxe-travel-global-chat';
-let lastMessageId = 0;
-const CHAT_API = 'https://api.jsonbin.io/v3/b/'; // Free JSON storage
-const BIN_ID = '6756a1b2ad19ca34f8d4e8f9'; // Public bin for chat
 
-function initializeChat() {
-    // Get or create username
-    chatUsername = localStorage.getItem('chatUsername');
-    if (!chatUsername) {
-        chatUsername = prompt('Enter your name for chat:') || 'Traveler' + Math.floor(Math.random() * 1000);
-        localStorage.setItem('chatUsername', chatUsername);
-    }
-    
-    // Load messages
-    loadMessages();
-    
-    // Poll for new messages every 500ms (0.5 seconds)
-    setInterval(loadMessages, 500);
-}
-
-function loadMessages() {
-    fetch(`https://api.allorigins.win/raw?url=https://jsonkeeper.com/b/LUXE_CHAT`)
-        .then(response => response.json())
-        .then(data => {
-            const messages = data.messages || [];
-            displayMessages(messages);
-        })
-        .catch(error => {
-            console.error('Error loading messages:', error);
-            // Fallback to localStorage
-            const messages = JSON.parse(localStorage.getItem('luxe-chat-backup') || '[]');
-            displayMessages(messages);
-        });
-}
-
-function displayMessages(messages) {
-    const chatMessages = document.getElementById('chatMessages');
-    
-    if (messages.length === 0) {
-        chatMessages.innerHTML = '<div class="chat-system-message">No messages yet. Be the first to say hello!</div>';
-        return;
-    }
-    
-    // Only update if there are new messages
-    if (messages.length > 0 && messages[messages.length - 1].id > lastMessageId) {
-        // Save scroll position
-        const wasScrolledToBottom = chatMessages.scrollHeight - chatMessages.scrollTop <= chatMessages.clientHeight + 50;
-        
-        chatMessages.innerHTML = '';
-        
-        messages.slice(-50).forEach(msg => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message' + (msg.username === chatUsername ? ' own' : '');
-            
-            const time = new Date(msg.time).toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            
-            messageDiv.innerHTML = `
-                <div class="chat-message-header">
-                    <span class="chat-username">${escapeHtml(msg.username)}</span>
-                    <span class="chat-time">${time}</span>
-                </div>
-                <div class="chat-message-text">${escapeHtml(msg.text)}</div>
-            `;
-            
-            chatMessages.appendChild(messageDiv);
-        });
-        
-        // Only auto-scroll if user was already at bottom
-        if (wasScrolledToBottom) {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        if (messages.length > 0) {
-            lastMessageId = messages[messages.length - 1].id;
-        }
-        
-        // Backup to localStorage
-        localStorage.setItem('luxe-chat-backup', JSON.stringify(messages));
-    }
-}
-
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    
-    if (!text) return;
-    
-    const newMessage = {
-        id: Date.now(),
-        username: chatUsername,
-        text: text,
-        time: Date.now()
-    };
-    
-    // Get existing messages from backup
-    const messages = JSON.parse(localStorage.getItem('luxe-chat-backup') || '[]');
-    messages.push(newMessage);
-    
-    // Keep only last 100 messages
-    if (messages.length > 100) {
-        messages.shift();
-    }
-    
-    // Save to localStorage as backup
-    localStorage.setItem('luxe-chat-backup', JSON.stringify(messages));
-    
-    // Update lastMessageId to prevent clearing
-    lastMessageId = newMessage.id;
-    
-    // Display immediately with force update
-    const chatMessages = document.getElementById('chatMessages');
-    const wasScrolledToBottom = chatMessages.scrollHeight - chatMessages.scrollTop <= chatMessages.clientHeight + 50;
-    
-    chatMessages.innerHTML = '';
-    
-    messages.slice(-50).forEach(msg => {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'chat-message' + (msg.username === chatUsername ? ' own' : '');
-        
-        const time = new Date(msg.time).toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        
-        messageDiv.innerHTML = `
-            <div class="chat-message-header">
-                <span class="chat-username">${escapeHtml(msg.username)}</span>
-                <span class="chat-time">${time}</span>
-            </div>
-            <div class="chat-message-text">${escapeHtml(msg.text)}</div>
-        `;
-        
-        chatMessages.appendChild(messageDiv);
-    });
-    
-    // Scroll to bottom after sending
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Clear input
-    input.value = '';
-    
-    // Try to send to server (will work if API is available)
-    fetch('https://jsonkeeper.com/b/LUXE_CHAT', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: messages })
-    }).catch(() => {
-        console.log('Using local storage mode');
-    });
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
 
 

@@ -226,5 +226,3 @@ class APIService {
 
 // Global instance
 window.apiService = new APIService();
-
-export default window.apiService;
