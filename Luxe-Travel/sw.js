@@ -1,17 +1,16 @@
 // ArLux Service Worker - Offline Support & Caching
-const CACHE_NAME = 'arlux-v1';
+const CACHE_NAME = 'arlux-v3';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/style.css',
-  '/js/chat.js',
-  '/js/news.js',
-  '/src/core/errorHandler.production.js',
-  '/src/core/loadingManager.production.js',
-  '/src/services/apiService.production.js',
-  '/src/utils/validator.production.js',
-  '/src/styles/production.components.css'
+  './index.html',
+  './app.js',
+  './style.css',
+  './js/chat.js',
+  './js/news.js',
+  './src/core/errorHandler.production.js',
+  './src/core/loadingManager.production.js',
+  './src/services/apiService.production.js',
+  './src/utils/validator.production.js',
+  './src/styles/production.components.css'
 ];
 
 self.addEventListener('install', (event) => {
