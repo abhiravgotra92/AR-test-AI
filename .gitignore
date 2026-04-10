@@ -1,0 +1,5 @@
+PDF-Web-App/
+node_modules/
+*.db
+.env
+landscaping.db
