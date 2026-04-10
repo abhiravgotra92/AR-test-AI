@@ -78,6 +78,8 @@
             <div class="chat-body">
                 <div class="chat-header-controls">
                     <div class="current-username">
+                        <span id="chatOnlineCount" style="font-size:12px;color:#34d399;">🟢 1 online</span>
+                        <span class="chat-conn-dot offline" id="chatConnDot" title="Connecting..."></span>
                         <span class="username-label">Chatting as:</span>
                         <span id="currentUsername" class="username-display"></span>
                         <button id="changeUsernameBtn" class="change-username-btn" title="Change username">
@@ -89,6 +91,7 @@
                     </div>
                 </div>
                 <div id="chatMessages" class="chat-messages"></div>
+                <div id="chatTypingBar" style="min-height:18px;padding:2px 12px;font-size:12px;color:#a78bfa;font-style:italic;"></div>
                 <div class="chat-input-container">
                     <input type="text" id="chatInput" placeholder="Type your message..." class="chat-input">
                     <button id="sendMessageBtn" class="send-message-btn">
@@ -308,7 +311,7 @@
             <div class="floating-chat-header">
                 <div>
                     <h3>Live Chat</h3>
-                    <span class="online-status">● Online</span>
+                    <span id="chatOnlineCount" class="online-status"></span>
                 </div>
                 <button id="minimizeChatBtn" class="minimize-chat-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -326,6 +329,7 @@
                 </button>
             </div>
             <div id="floatingChatMessages" class="floating-chat-messages"></div>
+                <div id="floatingTypingBar" style="min-height:18px;padding:2px 12px;font-size:11px;color:#a78bfa;font-style:italic;"></div>
             <div class="floating-chat-input">
                 <input type="text" id="floatingChatInput" placeholder="Type a message...">
                 <button id="floatingSendBtn" class="floating-send-btn">
@@ -337,6 +341,9 @@
             </div>
         </div>
     </div>
+
+    <!-- MQTT for real-time chat -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <!-- Production Scripts -->
     <script src="src/core/errorHandler.production.js"></script>

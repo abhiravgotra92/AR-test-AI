@@ -1302,6 +1302,18 @@ body {
 }
 
 
+/* Connection dot */
+.chat-conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background .3s;
+}
+.chat-conn-dot.online  { background: #34d399; }
+.chat-conn-dot.offline { background: #ff5c5c; animation: connPulse 1s infinite; }
+@keyframes connPulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
 /* Group Chat Styles */
 .chat-body {
     padding: 0;
