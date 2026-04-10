@@ -116,12 +116,14 @@
       font-weight: 600;
       padding: 3px 10px;
       border-radius: 99px;
-      background: color-mix(in srgb, var(--c) 15%, transparent);
-      color: var(--c);
-      border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      border: 1px solid;
     }
+    .badge-checking { background: rgba(107,114,128,.15); color: #6b7280; border-color: rgba(107,114,128,.3); }
+    .badge-live     { background: rgba(52,211,153,.15);  color: #34d399; border-color: rgba(52,211,153,.3); }
+    .badge-error    { background: rgba(248,113,113,.15); color: #f87171; border-color: rgba(248,113,113,.3); }
+    .badge-offline  { background: rgba(251,146,60,.15);  color: #fb923c; border-color: rgba(251,146,60,.3); }
 
     footer {
       margin-top: 3rem;
@@ -143,33 +145,62 @@
       <div class="icon-wrap"><i class="fa-solid fa-earth-americas"></i></div>
       <h2>Luxe Travel</h2>
       <p>City search, weather, news & more. A beautiful public travel guide.</p>
-      <span class="badge">Live</span>
+      <span class="badge badge-checking" data-url="https://abhiravgotra92.github.io/AR-test-AI/">Checking…</span>
     </a>
 
     <a class="card chat" href="https://abhiravgotra92.github.io/livechat/" target="_blank" rel="noopener">
       <div class="icon-wrap"><i class="fa-solid fa-comments"></i></div>
       <h2>LiveChat</h2>
-      <p>Real-time public chat. No login, no server — powered by Gun.js.</p>
-      <span class="badge">Live</span>
+      <p>Real-time public chat. No login, no server — powered by MQTT.</p>
+      <span class="badge badge-checking" data-url="https://abhiravgotra92.github.io/livechat/">Checking…</span>
     </a>
 
     <a class="card green" href="https://web-production-05085.up.railway.app/" target="_blank" rel="noopener">
       <div class="icon-wrap"><i class="fa-solid fa-leaf"></i></div>
       <h2>GreenEdge Resources</h2>
       <p>Landscaping resources & supply company. NFC delivery truck tracking, order management & admin panel.</p>
-      <span class="badge">Live</span>
+      <span class="badge badge-checking" data-url="https://web-production-05085.up.railway.app/">Checking…</span>
     </a>
 
     <a class="card pdf" href="https://web-production-a5f28.up.railway.app" target="_blank" rel="noopener">
       <div class="icon-wrap"><i class="fa-solid fa-file-pdf"></i></div>
       <h2>Webpage to PDF Converter</h2>
       <p>Crawls any website, captures images and converts every page into a structured downloadable PDF.</p>
-      <span class="badge">Live</span>
+      <span class="badge badge-checking" data-url="https://web-production-a5f28.up.railway.app">Checking…</span>
     </a>
 
   </div>
 
   <footer>Built by Abhirav Gotra &nbsp;·&nbsp; <a href="https://github.com/abhiravgotra92" style="color:#4b5563;" target="_blank">GitHub</a></footer>
+
+<script>
+  async function checkStatus(badge) {
+    const url = badge.dataset.url;
+    const start = Date.now();
+    try {
+      const res = await fetch(url, { method: 'HEAD', mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(8000) });
+      const ms = Date.now() - start;
+      // no-cors always returns opaque (type==='opaque') if reachable
+      badge.className = 'badge badge-live';
+      badge.textContent = '● Live ' + ms + 'ms';
+    } catch (e) {
+      const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
+      badge.className = 'badge badge-' + (isTimeout ? 'offline' : 'error');
+      badge.textContent = isTimeout ? '● Timeout' : '● Offline';
+    }
+  }
+
+  document.querySelectorAll('.badge[data-url]').forEach(checkStatus);
+
+  // Re-check every 60 seconds
+  setInterval(() => {
+    document.querySelectorAll('.badge[data-url]').forEach(b => {
+      b.className = 'badge badge-checking';
+      b.textContent = 'Checking…';
+      checkStatus(b);
+    });
+  }, 60000);
+</script>
 
 </body>
 </html>
