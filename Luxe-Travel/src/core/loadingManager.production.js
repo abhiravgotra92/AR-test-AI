@@ -129,4 +129,4 @@ class LoadingManager {
 // Global instance
 window.loadingManager = new LoadingManager();
 
-export default window.loadingManager;
+

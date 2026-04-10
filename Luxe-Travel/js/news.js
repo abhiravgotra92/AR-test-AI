@@ -242,35 +242,5 @@ function displayNews(articles) {
 }
 
 function initNews() {
-    document.getElementById('worldNewsBtn').addEventListener('click', function() {
-        document.getElementById('newsModalTitle').textContent = 'World News';
-        document.getElementById('newsModal').style.display = 'flex';
-        fetchWorldNews();
-    });
-    
-    document.getElementById('halifaxNewsBtn').addEventListener('click', function() {
-        document.getElementById('newsModalTitle').textContent = 'Halifax News';
-        document.getElementById('newsModal').style.display = 'flex';
-        fetchHalifaxNews();
-    });
-    
-    document.getElementById('pathankotNewsBtn').addEventListener('click', function() {
-        document.getElementById('newsModalTitle').textContent = 'Pathankot, Punjab News';
-        document.getElementById('newsModal').style.display = 'flex';
-        fetchPathankotNews();
-    });
-    
-    document.getElementById('nepalNewsBtn').addEventListener('click', function() {
-        document.getElementById('newsModalTitle').textContent = 'Nepal News';
-        document.getElementById('newsModal').style.display = 'flex';
-        fetchNepalNews();
-    });
-    
-    document.getElementById('closeNewsBtn').addEventListener('click', function() {
-        document.getElementById('newsModal').style.display = 'none';
-    });
-    
-    document.getElementById('newsModalOverlay').addEventListener('click', function() {
-        document.getElementById('newsModal').style.display = 'none';
-    });
+    // News button listeners are handled in app.js window.onload
 }

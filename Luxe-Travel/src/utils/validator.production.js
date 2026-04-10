@@ -173,4 +173,4 @@ class Validator {
 // Global instance
 window.validator = new Validator();
 
-export default window.validator;
+
